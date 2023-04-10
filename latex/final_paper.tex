@@ -2,27 +2,27 @@
 
 \usepackage[margin=1in]{geometry}
 %\usepackage{tabularx}
-\usepackage{authblk}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{setspace}
+%\usepackage{setspace}
 \usepackage{graphicx}
 \graphicspath{{./figure/}}
+\usepackage{hyperref}
 %\usepackage{ulem}
 %\usepackage[justification=centering]{caption}
 %\usepackage{parskip} % replaces parindent and parskip
 %\setlength{\parindent}{0pt}
 %\setlength{\parskip}{1em}
 %\pagestyle{empty}
-\usepackage{slashed}
+%\usepackage{slashed}
 %\usepackage{simplewick}
 %\usepackage{datenumber}
 %\usepackage{color}
 %\usepackage{multirow}
 %\usepackage{feynmp} % Feynman Diagrams
 %\DeclareGraphicsRule{*}{mps}{*}{} % Feynman Diagrams
-\usepackage[usenames,dvipsnames]{xcolor}
-\usepackage[utf8]{inputenc} % for accents in the names of citation
+%\usepackage[usenames,dvipsnames]{xcolor}
+%G\usepackage[utf8]{inputenc} % for accents in the names of citation
 
 \numberwithin{equation}{section}
 
@@ -30,10 +30,7 @@
 \sloppy % to relax the rules for inter word spacing making the word don't overflow
 
 \title{Multi-documentation Summarization of Science Articles}
-\author[1]{Justin To}
-\author[1]{Luka Liu}
-\author[1]{Milan Dean}
-\affil[1]{UC Berkeley School of Information}
+\author{Justin To, Luka Liu, Milan Dean}
 \date{
     W 266: Natural language Processing
     \\UC Berkeley School of Information
@@ -103,7 +100,14 @@ For the output length, considering the desired level of detail in the summary an
 \section{Data Preprocessing}
 \label{sec:dataprocessing}
 
-Multi-XScience includes a main abstract, which is from the main article; a standard summary of the related works with a separation of “@cite”, which is the summary of multi-source documentations, label datasets; and reference abstracts, which are the multiple abstracts from a different source of works. We processed the dataset by defining the separator of documents as ``\texttt{|||||}'', a document separator, then concatenating reference abstracts using the document separator to replace citation reference.
+Multi-XScience includes a main abstract, which is from the main article; a standard summary of the related works with a separation of “@cite”, which is the summary of multi-source documentations, label datasets; and reference abstracts, which are the multiple abstracts from a different source of works. We processed the dataset by defining the separator of documents as ``\texttt{|||||}'', a document separator, then concatenating reference abstracts using the document separator to replace citation reference, see an example in Figure~\ref{fig:X-science-example}.
+
+\begin{figure*}
+    \includegraphics[width=\textwidth]{X_science_example.png}
+    \caption{Data processing examples}
+    \label{fig:X-science-example}
+\end{figure*}
+
 
 \section{Model experiments results}
 \label{sec:results}
@@ -268,7 +272,7 @@ The same first step as the two-step LED Model above. In the second step, generat
 \section{Analysis}
 \label{app:analysis}
 
-Refer to the link.
+Refer to the \href{https://drive.google.com/file/d/1sPLj4a-rafh1EjOR7l_QMveexfoaxq3y/view?usp=share_link}{link}.
 
 {
     \footnotesize
