@@ -1,6 +1,6 @@
 \documentclass[12pt, twocolumn]{article}
 
-\usepackage[margin=1in]{geometry}
+\usepackage[margin=0.75in]{geometry}
 %\usepackage{tabularx}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -9,7 +9,7 @@
 \graphicspath{{./figure/}}
 \usepackage{hyperref}
 \usepackage{caption}
-%\usepackage{ulem}
+\usepackage{ulem}
 %\usepackage[justification=centering]{caption}
 %\usepackage{parskip} % replaces parindent and parskip
 %\setlength{\parindent}{0pt}
@@ -19,16 +19,18 @@
 %\usepackage{simplewick}
 %\usepackage{datenumber}
 %\usepackage{color}
-%\usepackage{multirow}
+\usepackage{multirow}
 %\usepackage{feynmp} % Feynman Diagrams
 %\DeclareGraphicsRule{*}{mps}{*}{} % Feynman Diagrams
 %\usepackage[usenames,dvipsnames]{xcolor}
-%G\usepackage[utf8]{inputenc} % for accents in the names of citation
+%\usepackage[utf8]{inputenc} % for accents in the names of citation
+\usepackage{pdfpages}
 
 \numberwithin{equation}{section}
 
 \begin{document}
 \sloppy % to relax the rules for inter word spacing making the word don't overflow
+\setcounter{page}{0}
 
 \title{Multi-documentation Summarization of Science Articles}
 \author{Justin To, Luka Liu, Milan Dean}
@@ -38,19 +40,25 @@
     \\~
     \\\today
 }
-\maketitle
 
+\onecolumn
+
+\maketitle
 \begin{abstract}%\normalsize\parindent 0pt\parskip 5pt
 
 In today's age of information overload, the ability to generate accurate and concise summaries of large bodies of text is more important than ever. This study focuses on the task of abstractive multi-document summarization (MDS), which involves generating a summary based on multiple related documents. Two state-of-the-art pre-trained large language models (LLMs), Centrum and LED, were selected, and different strategies, including fine-tuning and model-stacking, were explored for building an MDS model customized for Multi-XScience, a dataset previously unseen by the pre-trained models. In evaluating the summaries generated, we adopted both quantitative ROUGE-based scoring and qualitative analysis of the model outputs, in order to understand how the models adapted to unique elements specific to the task and dataset. By studying the process and strategies for adapting pre-trained models to domain-specific MDS tasks, we aim to contribute to the research on adapting pre-trained models for new and domain specific MDS tasks and datasets.
 
 \end{abstract}
+\thispagestyle{empty}
+
+\newpage
+\twocolumn
 
 \section{Introduction}
 
 MDS is the task of summarizing multiple texts into a concise and informative summary. Compared to single document summarization, it is challenging in the context of abstractive MDS to keep the summary coherent and comprehensive, given the documents are longer\footnote{For instance, the widely used CNN/Daily Mail dataset has an average input length of around 780 tokens.  In contrast, around 30\% of the inputs in the Multi-XScience dataset has over 1024 tokens, while the longest sample has over 6300 tokens.} and of a more complex structure\footnote{In MDS, the source articles are written by multiple authors with varying writing styles and article structures.}. Despite the challenges, MDS has a potentially wider application as real-world tasks often involve collating and summarizing information from multiple sources.  An important question therefore is, given the advances in NLP and the availability of pre-trained LLMs, how should we build a customized abstractive MDS model if we are given a domain-specific dataset previously unseen by the models?  
 
-In this paper, we employ the Multi-XScience dataset, a relatively recent dataset that has not been widely used for pre-training/fine-tuning LLMs, to simulate the situation where we are given an MDS task for a broad domain, e.g.~academic writing from the sciences.  The defining characteristics of the dataset, namely (a) the significant portion of samples with long inputs (up to $\sim$6300 tokens) and (b) that different articles within each sample are related yet not covering the exact same event\footnote{Furthee discussed in Section 3.1}, led us to pick two models for experimentation.  The first is the Longformer Encoder Decoder (LED) model, which was proposed by Beltagy et al.~\cite{beltagy2020longformer} and introduced the concept of local vs global attention so that attention-based transformers can still effectively handle the computation of long inputs.   The second is the Centrum model, proposed by Puduppully and Steedman~\cite{puduppully2022multidocument}, for its capability of handling long inputs and inclusion of a centroid-based approach for dealing with multiple source documents. 
+In this paper, we employ the Multi-XScience dataset, a relatively recent dataset that has not been widely used for pre-training/fine-tuning LLMs, to simulate the situation where we are given an MDS task for a broad domain, e.g.~academic writing from the sciences.  The defining characteristics of the dataset, namely (a) the significant portion of samples with long inputs (up to $\sim$6300 tokens) and (b) that different articles within each sample are related yet not covering the exact same event\footnote{Further discussed in Section~\ref{ssec:dataset}}, led us to pick two models for experimentation.  The first is the Longformer Encoder Decoder (LED) model, which was proposed by Beltagy et al.~\cite{beltagy2020longformer} and introduced the concept of local vs global attention so that attention-based transformers can still effectively handle the computation of long inputs.   The second is the Centrum model, proposed by Puduppully and Steedman~\cite{puduppully2022multidocument}, for its capability of handling long inputs and inclusion of a centroid-based approach for dealing with multiple source documents. 
 
 Leveraging on the available pre-trained checkpoints, we first tested the off-the-shelf LED and Centrum using the Multi-XScience dataset and then proceeded to fine-tune them for improved performance.  Then, we explored the use of a two-step setup whereby individual source articles of each sample are first shortened through summarization, and then combined again for MDS processing.  For evaluation, we employed the common ROUGE score metric, showing the improved performance from fine-tuning (ROUGE-2 from 5.2 to 6.9; ROUGE-L from 14.6 to 17.8, which are close to state-of-the-art (SOTA)).  Further analyses were conducted on the variation of performance across inputs of different lengths, and the amount of ``copying'' from the main article.  Lastly, a qualitative analysis was done on 25 samples for each model tested, and the fine-tuned and two-step models were found to demonstrate capabilities in extracting information from and contrasting different sources, while adapting its writing style to one suited for the dataset.
 
@@ -138,7 +146,7 @@ We used the Multi-XScience MDS dataset~\cite{lu-etal-2020-multi-xscience} in thi
 
 The dataset is chosen for two reasons.  First, Multi-XScience is among the few datasets previously unseen by MDS models during pre-training\footnote{LED’s pre-training data included Multi-News while Centrum’s pre-training included both Multi-News and WikiSum.}. Picking datasets already seen by the models could pose difficulties in evaluation, not to mention that it would go against the overall goal to explore MDS model-building strategies for unseen data. 
 
-The second reason is that Multi-XScience is a more challenging task that is more comparable to real-world data collation and summarization.   Many of the datasets (e.g. Multi-news, WCEP) are news-based, with the articles within a sample covering the same news event and key elements to be included in the summary appearing in multiple sources.  The Multi-XScience dataset however, expects the model to write the related works section of a journal paper based on (a) the abstract of that paper which serves to provide context; and (b) the abstracts of the other journal articles that the main paper referenced.  While these additional abstracts are usually\footnote{Some exceptions exist, e.g. sample 845 of the test set includes an irrelevant article on the design attributes of luggage carriers when the main article is on a MDS over online product reviews.  See ~Appendix~\ref{app:qualitative} for details.} closely related, they often concern different aspects of an issue, and the model needs to be able to compare and contrast the similarities and differences\footnote{In contrast, the commonly used Multi-news dataset has, in each sample, multiple news reports surrounding a single event, and the overall theme to be covered in the summary is generally present in every source article.}.  This difficulty of the dataset also shows up empirically\footnote{For instance, the zero- and few-short evaluation of BART, PEGASUS, LED and PRIMERA yielded a ROUGE-2 score of only 1.9 to 4.6 and a ROUGE-L score of 9.9 to 15.7 for Multi-XScience, while the score ranges for Multi-news is 3.7 to 13.6 for ROUGE-2 and 10.4 to 20.8 for ROUGE-L.  A similar gap remains even after fine-tuning of the models.} in~\cite{xiao2022primera}.
+The second reason is that Multi-XScience is a more challenging task that is more comparable to real-world data collation and summarization.   Many of the datasets (e.g.~Multi-news, WCEP) are news-based, with the articles within a sample covering the same news event and key elements to be included in the summary appearing in multiple sources.  The Multi-XScience dataset however, expects the model to write the related works section of a journal paper based on (a) the abstract of that paper which serves to provide context; and (b) the abstracts of the other journal articles that the main paper referenced.  While these additional abstracts are usually\footnote{Some exceptions exist, e.g.~sample 845 (refer to Appendix~\ref{app:samples} for sample review for sample review)) of the test set includes an irrelevant article on the design attributes of luggage carriers when the main article is on a MDS over online product reviews.  See ~Appendix~\ref{app:qualitative} for details.} closely related, they often concern different aspects of an issue, and the model needs to be able to compare and contrast the similarities and differences\footnote{In contrast, the commonly used Multi-news dataset has, in each sample, multiple news reports surrounding a single event, and the overall theme to be covered in the summary is generally present in every source article.}.  This difficulty of the dataset also shows up empirically\footnote{For instance, the zero- and few-short evaluation of BART, PEGASUS, LED and PRIMERA yielded a ROUGE-2 score of only 1.9 to 4.6 and a ROUGE-L score of 9.9 to 15.7 for Multi-XScience, while the score ranges for Multi-news is 3.7 to 13.6 for ROUGE-2 and 10.4 to 20.8 for ROUGE-L.  A similar gap remains even after fine-tuning of the models.} in~\cite{xiao2022primera}.
 
 As can be seen from the table above, the input length of the Multi X-Science dataset shows great variability, with some inputs so short that they can fit in more traditional summarization models, while others exceed even 4096, which is the max input length for Centrum.  The same variability can also be observed in terms of the number of articles per sample (see Figure~\ref{fig:token-length} below), with the two distributions showing a close-to-linear pattern.  This provides an opportunity for us to use the Multi X-Science dataset to explore possible differences in model performance between short and long samples. 
 
@@ -155,9 +163,9 @@ As can be seen from the table above, the input length of the Multi X-Science dat
 
 Due to resource constraints, we focused on two pre-trained LLMs, namely LED and Centrum for our experiments.  Of the three recent and well-performing models we reviewed, we did not pick PRIMERA for two reasons - (a) Centrum is, based on literature review, the best-performing model while LED is a common starting point for both PRIMERA and Centrum, meaning it could be treated as a more advanced baseline; and (b) the authors of PRIMERA already provided performance results of PRIMERA on the Multi-XScience test set. 
 
-We adopted two different baselines for performance comparison.  The first one, dubbed the ``baseline model'' is simply a lead-based model, whereby the first 3 sentences are chosen as the summary and is a common primary strategy implemented in various papers (e.g.~\cite{lu-etal-2020-multi-xscience}, \cite{see2017point} and \cite{zhang2020pegasus}).  This also provides a useful baseline for comparing the degree of ``copying'' (see section 3.3) from the main article which is an undesirable trait for the chosen dataset.  The second baseline is the publicly available checkpoint for LED, which serves as the base architecture for recent MDS LLMs.  
+We adopted two different baselines for performance comparison.  The first one, dubbed the ``baseline model'' is simply a lead-based model, whereby the first 3 sentences are chosen as the summary and is a common primary strategy implemented in various papers (e.g.~\cite{lu-etal-2020-multi-xscience}, \cite{see2017point} and \cite{zhang2020pegasus}).  This also provides a useful baseline for comparing the degree of ``copying'' (see Section~\ref{ssec:eval-metrics}) from the main article which is an undesirable trait for the chosen dataset.  The second baseline is the publicly available checkpoint for LED, which serves as the base architecture for recent MDS LLMs.  
 
-On top of the 2 baseline models, we ran experiments on the performance of the following models, with details on their fine-tuning and inference settings provided in Appendix~\label{app:model}:
+On top of the 2 baseline models, we ran experiments on the performance of the following models, with details on their fine-tuning and inference settings provided in Appendix~\ref{app:model}:
 
 \begin{enumerate}
     \item an alternative checkpoint of LED fine-tuned on the arXiv dataset
@@ -167,7 +175,7 @@ On top of the 2 baseline models, we ran experiments on the performance of the fo
     \item a two-step model stacking the fine-tuned LED and Centrum.
 \end{enumerate}
 
-Of these experiments, models (c) and (d) stem from our plab to test out the performance of fine-tuning strategies for MDS.  During the process, we noticed that despite the larger input length of Centrum (4096 tokens), there are still cases where the inputs have to be truncated and information omitted.  We therefore explored under model (e) a two-step model stacking process whereby the source articles are first condensed by our fine-tuned LED individually followed by an MDS process by (a) the fine-tuned LED or (b) the fine-tuned Centrum.  The idea is to investigate if Centrum performs better when presented with more concise sources and without token truncation, see Figure~\ref{fig:two-steps}. Refer to Appendix~\ref{app:model} for more details on the two step model.
+Of these experiments, models (c) and (d) stem from our plan to test out the performance of fine-tuning strategies for MDS.  During the process, we noticed that despite the larger input length of Centrum (4096 tokens), there are still cases where the inputs have to be truncated and information omitted.  We therefore explored under model (e) a two-step model stacking process whereby the source articles are first condensed by our fine-tuned LED individually followed by an MDS process by (a) the fine-tuned LED or (b) the fine-tuned Centrum.  The idea is to investigate if Centrum performs better when presented with more concise sources and without token truncation, see Figure~\ref{fig:two-steps}. Refer to Appendix~\ref{app:model} for more details on the two step model.
 
 \begin{figure}
     \includegraphics[width=\columnwidth]{two_steps.png}
@@ -180,7 +188,7 @@ Of these experiments, models (c) and (d) stem from our plab to test out the perf
 
 As in the standard practice for summarization, the primary metric we use is the ROUGE score.  Among the different versions of ROUGE, we chose ROUGE-2 and ROUGE-L, with a particular focus on the latter given the prevalence of compound nouns in academic writings\footnote{This is an empirical observation from viewing samples in the dataset, and is quite intuitive considering academic terms are often ones glued together from multiple words (e.g.~the theme of ``Synchronous Optical Network Ring Assignment Problem'' in sample 4820 of the test set, and ``fixed-size ordinally forgetting encoding'' in sample 3157).}, for gauging model performance.  Compared to ROUGE-2, ROUGE-L is better suited for this task.  In calculating these metrics, precision, recall, and f-measure are all considered\footnote{We also look only at the mean score but not the lower and upper ranges due to the limited scope of our study, though we recognize that looking at the variation in performance across samples is in itself a valid future investigation direction.}, and scores were computed for the overall test dataset, as well as the subsets of short, medium, and long token length samples\footnote{We divided the 5093 test samples into three groups.  ``Short'' samples consisted of 1273 samples with less than 486 tokens (lower quartile) for the inputs; ``medium'' with 2546 samples with input lengths between 486 and 735 (upper quartile) tokens; and the remaining 1274 samples with input lengths greater than 1150 tokens are grouped into the ``long'' samples.}.  
 
-Unlike other MDS datasets where the key information is expected to be found in most, if not all, of the source articles, the Multi X-Science dataset has a different structure whereby the main article (i.e. first source) is expected to provide general context while the other sources will each provide a related, yet different angle of the topic.  It is desirbale for models to extract information not just from the main article, and we therefore measured the degree of ``copying'' from the main article by repurposing standard ROUGE calculations\footnote{Implemented using the standard rouge function by replacing the target reference that the function takes in with the main article of the sample.}.
+Unlike other MDS datasets where the key information is expected to be found in most, if not all, of the source articles, the Multi X-Science dataset has a different structure whereby the main article (i.e. first source) is expected to provide general context while the other sources will each provide a related, yet different angle of the topic.  It is desirable for models to extract information not just from the main article, and we therefore measured the degree of ``copying'' from the main article by repurposing standard ROUGE calculations\footnote{Implemented using the standard rouge function by replacing the target reference that the function takes in with the main article of the sample.}.
 
 Finally, we supplemented our evaluation with a qualitative analysis whereby 25 random samples were selected and we reviewed the summaries written by the baseline LED and the 5 models experimented, judging them based on fluency, ability to extract information from multiple sources, and contrast information from the main article and other sources, as well as factual accuracy.
 
@@ -196,23 +204,76 @@ As shown in the tables above, the fine-tuned models (LED and Centrum) provided a
 
 This result is consistent with what our qualitative analysis (Appendix~\ref{app:qualitative}).  For example, in sample 485, the Centrum model was able to extract the key ideas of 3 relevant studies and contrast them with the main article, forming a coherent summary, while the baseline and off-the-shelf models were overwhelmed by the large number of articles (9 in total) and choose only to copy one of the articles in full.  This is very different from shorter samples, e.g.~sample 4160 with only 3 articles, where the off-the-shelf models were still able to prepare a summary covering elements, albeit in a more extractive manner without efforts to change the tone or merge the extracted parts together.
 
-For the two-step model, the ROUGE scores do not show any advantage of the approach over simple fine-tuned models.  However, as we observe from the qualitative analysis (e.g.~samples 831 and 5068), there is a strong tendency for the two-step model to highlight differences and similarities between the main and other articles.  However, the downside is that the two-step model made quite a number of factual fallacies in the process\footnote{One possible reason is that we need better tuning on the amount and manner of information fed into the 2nd step model, but resouce limitations were a main obstacle considering the generation of the first step answers alone took over14 hours.}.
+For the two-step model, the ROUGE scores do not show any advantage of the approach over simple fine-tuned models.  However, as we observe from the qualitative analysis (e.g.~samples 831 and 5068), there is a strong tendency for the two-step model to highlight differences and similarities between the main and other articles.  However, the downside is that the two-step model made quite a number of factual fallacies in the process\footnote{One possible reason is that we need better tuning on the amount and manner of information fed into the 2nd step model, but resouce limitations were a main obstacle considering the generation of the first step answers alone took over 14 hours.}.
 
 \begin{table}
-    \begin{tabular}{|c|c|}
-	1 & 1
-        \\ 2 & 2
+    \centering
+    \footnotesize
+    \begin{tabular}{|p{1.5cm}|c|c|c|c|c|}
+    \hline
+        Model & R-2 & Overall & Short & Medium & Long \\ \hline
+        \multirow{3}{1.5cm}{Baseline (Lead)} & P & 4.50 & 4.78 & 4.68 & 3.87 \\ \cline{2-6}
+        & R & 8.13 & 6.12 & 7.87 & 10.7 \\ \cline{2-6}
+        & F & 5.40 & \textit{5.02} & 5.56 & 5.48 \\ \hline
+        \multirow{3}{1.5cm}{Baseline (LED)} & P & 4.52 & 4.12 & 4.75 & 4.47 \\ \cline{2-6}
+        ~ & R & 6.99 & 8.17 & 7.07 & 5.63 \\ \cline{2-6}
+        ~ & F & \textit{5.21} & 5.2 & 5.40 & \textit{4.83} \\ \hline
+        \multirow{3}{1.5cm}{LED} & P & 5.25 & 5.32 & 5.30 & 5.09 \\ \cline{2-6}
+        ~ & R & 6.31 & 6.97 & 6.34 & 5.57 \\ \cline{2-6}
+        ~ & F & 5.39 & 5.58 & 5.44 & 5.11 \\ \hline
+        \multirow{3}{1.5cm}{Centrum} & P & 4.14 & 4.02 & 4.23 & 4.09 \\ \cline{2-6}
+        ~ & R & 8.12 & 9.48 & 8.14 & 6.70 \\ \cline{2-6}
+        ~ & F & 5.24 & 5.36 & \textit{5.34} & 4.93 \\ \hline
+        \multirow{3}{1.5cm}{Our LED} & P & 8.75 & 8.03 & 8.67 & 9.63 \\ \cline{2-6}
+        ~ & R & 5.89 & 5.21 & 5.69 & 6.94 \\ \cline{2-6}
+        ~ & F & 6.56 & 5.83 & 6.41 & 7.62 \\ \hline
+        \multirow{3}{1.5cm}{Our Centrum} & P & 7.62 & 7.10 & 7.58 & 8.28 \\ \cline{2-6}
+        ~ & R & 7.27 & 6.38 & 7.13 & 8.44 \\ \cline{2-6}
+        ~ & F & \textbf{6.88} & \textbf{6.14} & \textbf{6.78} & \textbf{7.82} \\ \hline
+        \multirow{3}{1.5cm}{2-Step (Centrum)} & P & 5.87 & 5.66 & 5.92 & 5.99 \\ \cline{2-6}
+        ~ & R & 6.67 & 6.15 & 6.62 & 7.26 \\ \cline{2-6}
+        ~ & F & 5.86 & 5.42 & 5.87 & 6.28 \\ \hline
     \end{tabular}
-    \caption{Rouge-2 Scores for Models Tested (Best in green; worst in red)}
+    \caption{Rouge-2 Scores for Models Tested (Best in \textbf{bold}; worst is \textit{italicized})}
     \label{tab:rouge-2}
 \end{table}
 
 \begin{table}
-    \begin{tabular}{|c|c|}
-	1 & 1
-        \\ 2 & 2
+    \centering
+    \footnotesize
+    \begin{tabular}{|p{1.5cm}|c|c|c|c|c|}
+    \hline
+        Model & R-2 & Overall & Short & Medium & Long \\ \hline
+        \multirow{3}{1.5cm}{Baseline (Lead)}
+	& P & 12.4 & 14.9 & 12.7 & 9.17 \\ \cline{2-6}
+        & R & 21.7 & 18.8 & 21.3 & 25.2 \\ \cline{2-6}
+        & F & 14.6 & 15.5 & 15 & \textit{12.9} \\ \hline
+        \multirow{3}{1.5cm}{Baseline (LED)} 
+	& P & 12.9 & 11.6 & 13.3 & 13.5 \\ \cline{2-6}
+        & R & 20.5 & 23.8 & 20.4 & 17.3 \\ \cline{2-6}
+        & F & 14.9 & 14.8 & 15.1 & 14.6 \\ \hline
+        \multirow{3}{1.5cm}{LED} 
+	& P & 15.1 & 15.4 & 15.1 & 14.3 \\ \cline{2-6}
+        & R & 18.6 & 20.3 & 18.7 & 16.7 \\ \cline{2-6}
+        & F & 15.7 & 16.2 & 15.7 & 15.0 \\ \hline
+        \multirow{3}{1.5cm}{Centrum} 
+	& P & 11.3 & 10.8 & 11.4 & 11.7 \\ \cline{2-6}
+        & R & 22.7 & 25.5 & 22.8 & 19.7 \\ \cline{2-6}
+        & F & \textit{4.4} & \textit{14.4} & \textit{14.6} & 14.2 \\ \hline
+        \multirow{3}{1.5cm}{Our LED} 
+	& P & 23.6 & 24.2 & 23.5 & 23.2 \\ \cline{2-6}
+        & R & 15.9 & 15.7 & 15.5 & 16.8 \\ \cline{2-6}
+        & F & 17.7 & 17.6 & 17.4 & \textbf{18.4} \\ \hline
+        \multirow{3}{1.5cm}{Our Centrum} 
+	& P & 19.8 & 20.9 & 19.6 & 19.1 \\ \cline{2-6}
+        & R & 18.9 & 18.4 & 18.7 & 19.7 \\ \cline{2-6}
+        & F & \textbf{17.8} & \textbf{17.9} & \textbf{17.6} & 18.1 \\ \hline
+        \multirow{3}{1.5cm}{2-Step (Centrum)} 
+	& P & 17.0 & 18.0 & 17.0 & 15.9 \\ \cline{2-6}
+        & R & 19.6 & 19.7 & 19.5 & 19.6 \\ \cline{2-6}
+        & F & 17.0 & 17.4 & 17.0 & 16.7 \\ \hline
     \end{tabular}
-    \caption{Rouge-L Scores for Models Tested (Best in green; worst in red)}
+    \caption{Rouge-L Scores for Models Tested (Best in \textbf{bold}; worst is \textit{italicized})}
     \label{tab:rouge-l}
 \end{table}
 
@@ -221,14 +282,44 @@ For the two-step model, the ROUGE scores do not show any advantage of the approa
 
 To assess the degree of copying from the main article, we calculated a re-purposed ROUGE-L score. As shown in the table below, the fine-tuned and two-step models exhibited a significantly lower degree of ``copying'', which is supported by the qualitative analysis showing that these models were able to extract information from multiple articles. In contrast, the baseline LED model showed the highest degree of ``copying'', often copying substantial portions of the main article to the point that the number of copied sentences exceeded even that of the lead-based baseline.
 
-Although the ROUGE scores did not reveal any significant ``copying'' for the off-the-shelf LED and Centrum models, it is noteworthy that these models occasionally copied from a single reference article rather than the main article (e.g. see the output of the base Centrum for sample 4371). This indicates that there is still room for improving the ``copying'' metric, such as by taking the minimum of the ROUGE-L scores compared to each input article (rather than just the main article) to discourage ``copying'' from a single source.
+Although the ROUGE scores did not reveal any significant ``copying'' for the off-the-shelf LED and Centrum models, it is noteworthy that these models occasionally copied from a single reference article rather than the main article (e.g.~see the output of the base Centrum for sample 4371). This indicates that there is still room for improving the ``copying'' metric, such as by taking the minimum of the ROUGE-L scores compared to each input article (rather than just the main article) to discourage ``copying'' from a single source.
 
 \begin{table}
-    \begin{tabular}{|c|c|}
-	1 & 1
-        \\ 2 & 2
+    \centering
+    \footnotesize
+    \begin{tabular}{|p{1.5cm}|c|c|c|c|c|}
+    \hline
+        Model & R-2 & Overall & Short & Medium & Long \\ \hline
+        \multirow{3}{1.5cm}{Baseline (Lead)} 
+	& P & 39.7 & 56.6 & 39.7 & 22.7 \\ \cline{2-6}
+        & R & 40.7 & 41.1 & 39.0 & 43.9 \\ \cline{2-6}
+        & F & 36.8 & 44.9 & 36.8 & 28.5 \\ \hline
+        \multirow{3}{1.5cm}{Baseline (LED)} 
+	& P & 76.9 & 83.1 & 86.9 & 50.7 \\ \cline{2-6}
+        & R & 75.5 & 92.8 & 81.5 & 46.3 \\ \cline{2-6}
+        & \textit{F} & \textit{74.2} & \textit{85.6} & \textit{81.9} & \textit{47.2} \\ \hline
+        \multirow{3}{1.5cm}{LED} 
+	& P & 45.3 & 58.8 & 43.9 & 34.7 \\ \cline{2-6}
+        & R & 33.6 & 44.3 & 31.5 & 27.0 \\ \cline{2-6}
+        & F & 37.4 & 48.9 & 35.6 & 29.5 \\ \hline
+        \multirow{3}{1.5cm}{Centrum} 
+	& P & 48.2 & 56.5 & 48.6 & 39.2 \\ \cline{2-6}
+        & R & 57.5 & 73.7 & 55.7 & 45.1 \\ \cline{2-6}
+        & F & 51.2 & 62.4 & 50.8 & 41.0 \\ \hline
+        \multirow{3}{1.5cm}{Our LED} 
+	& P & 33.6 & 35.5 & 34.7 & 29.5 \\ \cline{2-6}
+        & R & 13.5 & 13.0 & 13.2 & 14.7 \\ \cline{2-6}
+        & \textbf{F} & \textbf{18.3} & \textbf{18.0} & \textbf{18.2} & 18.7 \\ \hline
+        \multirow{3}{1.5cm}{Our Centrum} 
+	& P & 29.4 & 32.9 & 29.4 & 26.1 \\ \cline{2-6}
+        & R & 17.3 & 16.4 & 16.9 & 19.0 \\ \cline{2-6}
+        & F & 20.5 & 20.7 & 20.1 & 20.9 \\ \hline
+        \multirow{3}{1.5cm}{2-Step (Centrum)} 
+	& P & 24.7 & 27.9 & 25.0 & 21.0 \\ \cline{2-6}
+        & R & 17.2 & 17.1 & 16.8 & 18.0 \\ \cline{2-6}
+        & F & 19.1 & 20.1 & 18.9 & \textbf{18.6} \\ \hline
     \end{tabular}
-    \caption{Rouge-L Scores for Measuring ``Copying'' (Lower is better; best in green; worst in red)}
+    \caption{Rouge-L Scores for Measuring ``Copying'' (Best in \textbf{bold}; worst is \textit{italicized})}
     \label{tab:rouge-l-copy}
 \end{table}
 
@@ -248,8 +339,6 @@ The qualitative analysis also allowed us to make the following observations on t
 
 In conclusion, we demonstrated the viability of building custom-based MDS models through fine-tuning which is able to quickly approach SOTA scores even with simple and limited tuning.  Through breakdown and qualitative analyses of the results, we highlighted the importance of considering the token length of input texts when selecting a text summarization model. Our results suggest that the fine-tuned LED and Centrum models are much more adept at MDS for longer texts, while the two-step model shows potential especially for highly technical texts despite needing more tuning. Future work could focus on further optimizing the tuning techniques (e.g.~fine-tuning with domain-specific texts first before the MDS data), improving on the two-step approach, as well as looking at the performance stability of the models across data samples.
 
-\newpage
-\hspace{1em}
 \newpage
 \textbf{\Huge Appendix}
 \appendix
@@ -359,11 +448,21 @@ Overall, our study highlights the importance of considering the length of source
 
 Future research in this area should focus on developing models that can effectively summarize long documents; and provide the model with more specialized knowledge to help the model recognize and differentiate between regular language and math expressions, improving its ability to summarize math-related documents effectively. Refer to the manual review documentation in more detail \href{https://drive.google.com/file/d/1sPLj4a-rafh1EjOR7l_QMveexfoaxq3y/view?usp=share_link}{link}.
 
+\section{Detailed Review Samples}
+\label{app:samples}
+
+Refer to the following pages.
+
 {
-    \footnotesize
+    %\footnotesize
     %{\scriptsize
     \bibliography{bibliography}
     \bibliographystyle{plain}
 }
+
+\newpage
+\hspace{1cm}
+\newpage
+\includepdf[pages=-,rotateoversize]{qualitative_analysis_revised.pdf}
 
 \end{document}
