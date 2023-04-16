@@ -346,20 +346,32 @@ In conclusion, we demonstrated the viability of building custom-based MDS models
 \section{EDA and Data Preprocessing}
 \label{app:eda}
 
-This appendix provides further findings from the EDA on the Multi-XScience dataset, as well as the data preprocessing procedures undertaken in the experiments.
+\subsection{Introduction}
+\label{app:eda-intro}
 
-As mentioned above, one standard summary could be summarized from more than 20 source articles.  With concatenating all sources of articles, the total token length is about 4096. In addition, we've examined the token length of these standard summaries (label) and provided the details below. 
+This appendix provides further findings from the EDA on the Multi-XScience dataset, as well as the data preprocessing procedures undertaken in the experiments. In particular, the distribution in the length of inputs and labels respectively guided us in determining (a) the maximum number of tokens fed into the models; and (b) the maximum output of length of generated summaries.
 
-To determine the input length, we look at the average length of the documents we want to summarize. With the consideration of the various numbers of source documents and our GPU capabilities, we decided to take input numbers of tokens = 512 as an experiment and numbers of tokens = 4096 (max tokens in the training dataset) as our final model. 
+\subsection{Distribution of Input and Output Lengths}
 
-For the output length, considering the desired level of detail in the summary and the distribution of standard summaries (label) tokens, we decided a summary length between 100-250 may be sufficient. 
+To determine the input length, we looked at the average length of the samples (i.e.~each with multiple articles) in the Multi-XScience dataset.  Based on the parameters set out in Table 1 of the paper, and taking into account model limitations\footnote{LED can take in at most 16384 tokens and Centrum can take in 4096 tokens.} and GPU capabilities, we set the input numbers of tokens as 4096 in the fine-tuning process.  As for the baseline and off-the-shelf models which do not require fine-tuning, we experimented on other input token lengths including 512, 1024 and 16384. 
+
+To determine the max output length\footnote{LED and Centrum both do not come with options to set minimum output lengths.  One can force such a parameter into the generation function, but initial experimentations showed minimal impact on the output.}, we looked at the distribution of the token length of the standard summaries (label) that came with the dataset.  A sample distribution for the training dataset, which closely resembles the distributions for the validation and test datasets, is provided below.
+
+\begin{figure}
+    \includegraphics[width=\columnwidth]{label_dist.png}
+    \caption{Distribution of the number of tokens in the label of training data. The number of tokens is right-skewed and centered around 100.}
+    \label{fig:label-dist}
+\end{figure}
+
+Considering the desired level of detail in the summary and the distribution of standard summaries (label) tokens, we decided to set 256 as the maximum number of tokens\footnote{During a number oe early stage experiments with LED, the maximum was set at 200 instead.} at inference time.
+
+\subsection{Data Preprocessing}
 
 Multi-XScience includes a main abstract, which is from the main article; a standard summary of the related works with a separation of ``@cite'', which is the summary of multi-source documentations, label datasets; and reference abstracts, which are the multiple abstracts from a different source of works. We processed the dataset by defining the separator of documents as ``\texttt{|||||}'', a document separator, then concatenating reference abstracts using the document separator to replace citation references. 
 
 \begin{figure*}
-    \includegraphics[width=\textwidth]{label_dist.png}
-    \caption{Distribution of the number of tokens in the label of training data. The number of tokens is right-skewed and centered around 100.}
-    \label{fig:label-dist}
+    \includegraphics[width=\textwidth]{X_science_example.png}
+    \caption{Multi-XScience data sample}
 \end{figure*}
 
 \section{Model}
@@ -368,7 +380,7 @@ Multi-XScience includes a main abstract, which is from the main article; a stand
 \subsection{Baseline Model}
 \label{app:model-baseline}
 
-Copying the first 3 sentences from each reference abstract was used as our baseline. It is a simple and easy-to-implement approach that provides a starting point for summarizing multiple documents. It assumes that the first few sentences of a document contain important information that should be included in the summary.
+Copying the first 3 sentences from each reference abstract was used as our first baseline. It is a simple and easy-to-implement approach that provides a starting point for summarizing multiple documents. It assumes that the first few sentences of a document contain important information that should be included in the summary.
 
 This approach can serve as a useful baseline for several reasons:
 
@@ -381,14 +393,14 @@ This approach can serve as a useful baseline for several reasons:
 \subsection{Baseline Base LED (1K and 16K) Model}
 \label{app:model-base-led}
 
-The base LED model has (``allenai/led-base-16384''), with max input token length of 16384 \& $\sim$200M parameters and consists of 12 transformer encoder layers and 2 transformer decoder layers. This model is designed to be computationally efficient and suitable for low-resource environments. The baseline LED was generated based on a pre-trained LED model by Beltagy, L (2020)~\cite{beltagy2020longformer} on X-science test datasets with input tokens varying from 1k and 6k. 
+The base LED model has (``allenai/led-base-16384''), with max input token length of 16384 \& $\sim$200M parameters and consists of 12 transformer encoder layers and 2 transformer decoder layers. This model is designed to be computationally efficient and suitable for low-resource environments. The baseline LED was generated based on a pre-trained LED model by Beltagy, L (2020)~\cite{beltagy2020longformer} on Multi-XScience test datasets with input tokens varying from 1k and 6k. 
 
-\subsection{Baseline Large LED (1K and 16K) Model}
+\subsection{Off-the-shelf LED (1K and 16K) Model}
 \label{app:model-large-led}
 
-The ``large'' in the model name indicates that it has more parameters and is larger than the ``base'' LED model. The model has (``allenai/led-large-16384-arxiv''), with max input token length of 16384 \& $\sim$512M parameters, and consists of 24 transformer encoder layers and 4 transformer decoder layers. This model has been pre-trained for general summarization tasks. The baseline LED was generated based on a pre-trained large LED and evaluated on X-science test datasets.
+The off-the-shelf LED is referred to the ``large LED'' during our experiments to indicate that it has more parameters and is larger than the ``baseline'' LED model. The model has (``allenai/led-large-16384-arxiv''), with max input token length of 16384 \& $\sim$512M parameters, and consists of 24 transformer encoder layers and 4 transformer decoder layers. This model has been pre-trained for general summarization tasks. The baseline LED was generated based on a pre-trained large LED and evaluated on Multi-XScience test datasets.
 
-\subsection{Baseline Centrum Model}
+\subsection{Off-the-shelf Centrum Model}
 \label{app:model-centrum}
 
 The ``ratishsp/Centrum'' model with max input token length of 4096 \& $\sim$192M parameters and consists of 12 transformer encoder layers and 12 transformer decoder layers. It is smaller than some of the larger transformer models, such as T5 and GPT-3, but larger than some of the smaller transformer models, such as the BART base. The publicly available Centrum checkpoint was built upon the LED model architecture using the 4096 token version.This means Centrum is not able to take in 16384 tokens.
@@ -396,24 +408,19 @@ The ``ratishsp/Centrum'' model with max input token length of 4096 \& $\sim$192M
 \subsection{Fine-tuned LED Model}
 \label{app:model-ft-led}
 
-Fine-tuning the ``LED-large-16384-arxiv'' model to the X-science train (size 30369) and validation (size 5066) datasets specifically for the related work summarization. We used 4096 max number of tokens in tracking and validation sets, and 256 max output tokens with a batch size of 2 (due to limited GPU resources). The model is then used as a cross-entropy loss function for 2 epochs, and evaluated on test datasets(size 5093) with ROUGH metrics. 
+Fine-tuning the ``LED-large-16384-arxiv'' model to the Multi-XScience train (size 30369) and validation (size 5066) datasets specifically for the related work summarization. We used 4096 max number of tokens when feeding the training and validation sets during fine-tuning, and used 200 as the max output tokens with a batch size of 2 (due to limited GPU resources) at inference time. The model is then used as a cross-entropy loss function for 2 epochs with 40 checkpoints generated for every 5% of the training set fed into it, and evaluated on test datasets(size 5093) with ROUGE metrics. After looking into the performance of the checkpoints, we picked the 30th checkpoint (i.e.~trained for 1.5 epochs) as the final model.
 
 \subsection{Fine-tuned Centrum Model}
 \label{app:model-ft-centrum}
 
-Fine-tuning the ``ratishsp/Centrum'' model to the X-science train and validation datasets specifically for the related works summarization. We used 4096 max number of tokens in tracking and validation sets, and 256 max output tokens with a batch size of 16 (due to limited GPU resources). The model is then used as a cross-entropy loss function for 2 epochs, and evaluated on test datasets with ROUGH metrics. 
+Fine-tuning the ``ratishsp/Centrum'' model to the X-science train and validation datasets specifically for the related works summarization.  We used 4096 max number of tokens when feeding the training and validation sets during fine-tuning, and used 256 as the max output tokens with a batch size of 1 (due to limited GPU resources) at inference time. The model is then used as a cross-entropy loss function for 2 epochs, and evaluated on test datasets (size 5093) with ROUGE metrics.
 
-\subsection{Two-step LED Model}
+\subsection{Two-step LED/Centrum Model}
 \label{app:model-two-step-led}
 
-In the first step, the LED model is used to generate a summary of each related source document. By summarizing each source document, the model can condense the information and reduce redundancy, making it easier to process and analyze. For the first step, none of the individual source articles in the X-science dataset contain more than 4096 tokens, so there is no issue of the first step model (i.e.~the fine-tuned LED) receiving truncated inputs.
+In the first step, the LED model is used to generate a summary of each related source document. By summarizing each source document, the model can condense the information and reduce redundancy, making it easier to process and analyze. For the first step, none of the individual source articles in the Multi-XScience dataset contain more than 4096 tokens, so there is no issue of the first step model (i.e.~the fine-tuned LED) receiving truncated inputs.
 
-In the second step, generate the summary based on the fine-tuned LED model to refine the summaries generated in the first step. In this way, we were hoping that the fine-tuned LED model can learn to generate even more accurate and relevant summaries.
-
-\subsection{Two-step Centrum Model}
-\label{app:model-two-step-centrum}
-
-The same first step as the two-step LED Model above. In the second step, generate the summary based on the fine-tuned Centrum model to refine the summaries generated in the first step. In this way, we were hoping that the fine-tuned Centrum model can learn to generate even more accurate and relevant summaries.
+In the second step, generate the summary based on the fine-tuned LED model to refine the summaries generated in the first step. In this way, we were hoping that the second model can learn to generate even more accurate and relevant summaries.  Two different models were tested in the second step, namely our fine-tuned LED and the fine-tuned Centrum.  Only the results of the latter, which proved superior, were reported in the paper.
 
 \subsection{Two-step Model results}
 \label{app:model-two-step-model-results}
@@ -435,7 +442,7 @@ We also investigated how the model performed when summarizing short, medium, and
 
 Our analysis of the review (refer to the Analysis Appendix for more detailed review) results showed that the fine-tuned LED and Centrum learned the structure for multi-documents summary for X-science dataset, with particularly good results for longer documents (ref.~Sample 485) while for shorter samples the advantage over the baseline and off-the-shelf models appear to be less as those models are able to extract information from multiple sources to some degree, albeit with limited ability to merge them into a single coherent summary (ref.~Sample 4160). 
 
-Additionally, we observed that LED and Centrum seem to have difficulties in digesting math topics, where the use of common language for unusual meanings might have confused the models (refer to no 4858).  The two-step model somehow helps for these samples, but the downside is that the two-step model hallucinates quite a bit. In general, LED and Centrum never really hallucinate. To future improve this issue, we would suggest that further research in this area should consider:
+Additionally, we observed that LED and Centrum seem to have difficulties in digesting some of the more technical topics, where the use of common language for unusual meanings might have confused the models (refer to no 4858).  The two-step model somehow helps for these samples, but the downside is that the two-step model hallucinates quite a bit. In general, LED and Centrum never really hallucinate. To future improve this issue, we would suggest that further research in this area should consider:
 
 \begin{itemize}
     \item Add domain-specific knowledge: This can include adding specialized math dictionaries or knowledge bases to your training data. 
@@ -459,10 +466,5 @@ Refer to the following pages.
     \bibliography{bibliography}
     \bibliographystyle{plain}
 }
-
-\newpage
-\hspace{1cm}
-\newpage
-\includepdf[pages=-,rotateoversize]{qualitative_analysis_revised.pdf}
 
 \end{document}
