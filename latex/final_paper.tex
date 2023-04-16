@@ -110,6 +110,7 @@ We used the Multi-XScience MDS dataset~\cite{lu-etal-2020-multi-xscience} in thi
 	 \\ \hline
     \end{tabular}
     \caption{Dataset description. The cells with three columns refer to mean/standard deviation/range}
+    \label{tab:dataset-description}
     %\footnote{Based on the tokenizer of LED which is based on that of BART and shares the vocabulary with Centrum.}
 \end{table}
 
@@ -148,7 +149,7 @@ The dataset is chosen for two reasons.  First, Multi-XScience is among the few d
 
 The second reason is that Multi-XScience is a more challenging task that is more comparable to real-world data collation and summarization.   Many of the datasets (e.g.~Multi-news, WCEP) are news-based, with the articles within a sample covering the same news event and key elements to be included in the summary appearing in multiple sources.  The Multi-XScience dataset however, expects the model to write the related works section of a journal paper based on (a) the abstract of that paper which serves to provide context; and (b) the abstracts of the other journal articles that the main paper referenced.  While these additional abstracts are usually\footnote{Some exceptions exist, e.g.~sample 845 (refer to Appendix~\ref{app:samples} for sample review for sample review)) of the test set includes an irrelevant article on the design attributes of luggage carriers when the main article is on a MDS over online product reviews.  See ~Appendix~\ref{app:qualitative} for details.} closely related, they often concern different aspects of an issue, and the model needs to be able to compare and contrast the similarities and differences\footnote{In contrast, the commonly used Multi-news dataset has, in each sample, multiple news reports surrounding a single event, and the overall theme to be covered in the summary is generally present in every source article.}.  This difficulty of the dataset also shows up empirically\footnote{For instance, the zero- and few-short evaluation of BART, PEGASUS, LED and PRIMERA yielded a ROUGE-2 score of only 1.9 to 4.6 and a ROUGE-L score of 9.9 to 15.7 for Multi-XScience, while the score ranges for Multi-news is 3.7 to 13.6 for ROUGE-2 and 10.4 to 20.8 for ROUGE-L.  A similar gap remains even after fine-tuning of the models.} in~\cite{xiao2022primera}.
 
-As can be seen from the table above, the input length of the Multi X-Science dataset shows great variability, with some inputs so short that they can fit in more traditional summarization models, while others exceed even 4096, which is the max input length for Centrum.  The same variability can also be observed in terms of the number of articles per sample (see Figure~\ref{fig:token-length} below), with the two distributions showing a close-to-linear pattern.  This provides an opportunity for us to use the Multi X-Science dataset to explore possible differences in model performance between short and long samples. 
+As can be seen from the Table~\ref{tab:dataset-description}, the input length of the Multi X-Science dataset shows great variability, with some inputs so short that they can fit in more traditional summarization models, while others exceed even 4096, which is the max input length for Centrum.  The same variability can also be observed in terms of the number of articles per sample (see Figure~\ref{fig:token-length}), with the two distributions showing a close-to-linear pattern.  This provides an opportunity for us to use the Multi X-Science dataset to explore possible differences in model performance between short and long samples. 
 
 \begin{figure}
     \captionsetup{width=\columnwidth}
@@ -200,7 +201,7 @@ Finally, we supplemented our evaluation with a qualitative analysis whereby 25 r
 
 In the following table, we report the ROUGE-2 (R-2) and ROUGE-L (R-L) scores of the 2 baselines plus 5 models we tested, with precision (P), recall (R), and f-measure (F) scores presented.  Scores for overall, short, medium, and long samples are also presented.
 
-As shown in the tables above, the fine-tuned models (LED and Centrum) provided a markedly improved performance over the baselines and off-the-shelf models.  In fact, even though the models were only fine-tuned for up to 2 epochs\footnote{Training details and considerations are at Appendix~\ref{app:model}.}, our figures quickly approached the SOTA figures reported in~\cite{xiao2022primera} (i.e.~ROUGE-2 of 6.8; ROUGE-L of 18.2) demonstrating the viability of LED and Centrum to be adopted for previously unseen MDS data.  When considering the breakdowns, the improvement for longer samples was much more visible, indicating the MDS-specific model architectures are perhaps more suitable for tasks with longer input lengths.  
+As shown in the Table~\ref{tab:rouge-2} and Table~\ref{tab:rouge-l}, the fine-tuned models (LED and Centrum) provided a markedly improved performance over the baselines and off-the-shelf models.  In fact, even though the models were only fine-tuned for up to 2 epochs\footnote{Training details and considerations are at Appendix~\ref{app:model}.}, our figures quickly approached the SOTA figures reported in~\cite{xiao2022primera} (i.e.~ROUGE-2 of 6.8; ROUGE-L of 18.2) demonstrating the viability of LED and Centrum to be adopted for previously unseen MDS data.  When considering the breakdowns, the improvement for longer samples was much more visible, indicating the MDS-specific model architectures are perhaps more suitable for tasks with longer input lengths.  
 
 This result is consistent with what our qualitative analysis (Appendix~\ref{app:qualitative}).  For example, in sample 485, the Centrum model was able to extract the key ideas of 3 relevant studies and contrast them with the main article, forming a coherent summary, while the baseline and off-the-shelf models were overwhelmed by the large number of articles (9 in total) and choose only to copy one of the articles in full.  This is very different from shorter samples, e.g.~sample 4160 with only 3 articles, where the off-the-shelf models were still able to prepare a summary covering elements, albeit in a more extractive manner without efforts to change the tone or merge the extracted parts together.
 
@@ -218,7 +219,7 @@ For the two-step model, the ROUGE scores do not show any advantage of the approa
         \multirow{3}{1.5cm}{Baseline (LED)} & P & 4.52 & 4.12 & 4.75 & 4.47 \\ \cline{2-6}
         ~ & R & 6.99 & 8.17 & 7.07 & 5.63 \\ \cline{2-6}
         ~ & F & \textit{5.21} & 5.2 & 5.40 & \textit{4.83} \\ \hline
-        \multirow{3}{1.5cm}{LED} & P & 5.25 & 5.32 & 5.30 & 5.09 \\ \cline{2-6}
+        \multirow{3}{1.5cm}{LED (Alt Ver)} & P & 5.25 & 5.32 & 5.30 & 5.09 \\ \cline{2-6}
         ~ & R & 6.31 & 6.97 & 6.34 & 5.57 \\ \cline{2-6}
         ~ & F & 5.39 & 5.58 & 5.44 & 5.11 \\ \hline
         \multirow{3}{1.5cm}{Centrum} & P & 4.14 & 4.02 & 4.23 & 4.09 \\ \cline{2-6}
@@ -252,7 +253,7 @@ For the two-step model, the ROUGE scores do not show any advantage of the approa
 	& P & 12.9 & 11.6 & 13.3 & 13.5 \\ \cline{2-6}
         & R & 20.5 & 23.8 & 20.4 & 17.3 \\ \cline{2-6}
         & F & 14.9 & 14.8 & 15.1 & 14.6 \\ \hline
-        \multirow{3}{1.5cm}{LED} 
+        \multirow{3}{1.5cm}{LED (Alt Ver)} 
 	& P & 15.1 & 15.4 & 15.1 & 14.3 \\ \cline{2-6}
         & R & 18.6 & 20.3 & 18.7 & 16.7 \\ \cline{2-6}
         & F & 15.7 & 16.2 & 15.7 & 15.0 \\ \hline
@@ -280,7 +281,7 @@ For the two-step model, the ROUGE scores do not show any advantage of the approa
 \subsection{Degree of Copying}
 \label{ssec:results-copy}
 
-To assess the degree of copying from the main article, we calculated a re-purposed ROUGE-L score. As shown in the table below, the fine-tuned and two-step models exhibited a significantly lower degree of ``copying'', which is supported by the qualitative analysis showing that these models were able to extract information from multiple articles. In contrast, the baseline LED model showed the highest degree of ``copying'', often copying substantial portions of the main article to the point that the number of copied sentences exceeded even that of the lead-based baseline.
+To assess the degree of copying from the main article, we calculated a re-purposed ROUGE-L score. As shown in Table~\ref{tab:rouge-l-copy}, the fine-tuned and two-step models exhibited a significantly lower degree of ``copying'', which is supported by the qualitative analysis showing that these models were able to extract information from multiple articles. In contrast, the baseline LED model showed the highest degree of ``copying'', often copying substantial portions of the main article to the point that the number of copied sentences exceeded even that of the lead-based baseline.
 
 Although the ROUGE scores did not reveal any significant ``copying'' for the off-the-shelf LED and Centrum models, it is noteworthy that these models occasionally copied from a single reference article rather than the main article (e.g.~see the output of the base Centrum for sample 4371). This indicates that there is still room for improving the ``copying'' metric, such as by taking the minimum of the ROUGE-L scores compared to each input article (rather than just the main article) to discourage ``copying'' from a single source.
 
@@ -298,7 +299,7 @@ Although the ROUGE scores did not reveal any significant ``copying'' for the off
 	& P & 76.9 & 83.1 & 86.9 & 50.7 \\ \cline{2-6}
         & R & 75.5 & 92.8 & 81.5 & 46.3 \\ \cline{2-6}
         & \textit{F} & \textit{74.2} & \textit{85.6} & \textit{81.9} & \textit{47.2} \\ \hline
-        \multirow{3}{1.5cm}{LED} 
+        \multirow{3}{1.5cm}{LED (Alt Ver)} 
 	& P & 45.3 & 58.8 & 43.9 & 34.7 \\ \cline{2-6}
         & R & 33.6 & 44.3 & 31.5 & 27.0 \\ \cline{2-6}
         & F & 37.4 & 48.9 & 35.6 & 29.5 \\ \hline
